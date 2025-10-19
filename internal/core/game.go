@@ -20,13 +20,21 @@ type CharacterState int
 const (
 	Idle CharacterState = iota
 	Running
+	Jumping
+	Falling
 )
 
-type FacingDirection int
+type MovementDirection int
 
 const (
-	Left FacingDirection = iota
+	Left MovementDirection = iota
 	Right
+	Up
+	UpRight
+	UpLeft
+	Down
+	DownRight
+	DownLeft
 )
 
 type AnimationData struct {
@@ -40,10 +48,10 @@ type AnimationData struct {
 }
 
 type Character struct {
-	States          map[CharacterState]AnimationData
-	CurrentState    CharacterState
-	FacingDirection FacingDirection
-	Position        rl.Vector2
+	States            map[CharacterState]AnimationData
+	CurrentState      CharacterState
+	MovementDirection MovementDirection
+	Position          rl.Vector2
 }
 
 func (g *Game) Init() {

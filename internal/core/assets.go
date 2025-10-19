@@ -9,33 +9,13 @@ func (g *Game) LoadAssets() {
 	g.Bg = rl.LoadTexture("resources/background/Background.png")
 	g.GrassBlock = rl.LoadTexture("resources/assets/blocks/grass.png")
 
-	// Load animated GIF for Idle state
-	var idleFrames int32 = 0
-	idleImage := rl.LoadImageAnim("resources/character/colour2/no_outline/120x80_gifs/__Idle.gif", &idleFrames)
-	idleTexture := rl.LoadTextureFromImage(idleImage)
-	g.Hero.States[Idle] = AnimationData{
-		Image:        idleImage,
-		Texture:      idleTexture,
-		FrameCount:   idleFrames,
-		CurrentFrame: 0,
-		FrameDelay:   8, // Adjust this value to control animation speed
-		FrameCounter: 0,
-		FrameSize:    idleImage.Width * idleImage.Height,
-	}
+	gifDir := "resources/character/colour2/no_outline/120x80_gifs/"
 
-	// Load animated GIF for Running state
-	var runningFrames int32 = 0
-	runningImage := rl.LoadImageAnim("resources/character/colour2/no_outline/120x80_gifs/__Run.gif", &runningFrames)
-	runningTexture := rl.LoadTextureFromImage(runningImage)
-	g.Hero.States[Running] = AnimationData{
-		Image:        runningImage,
-		Texture:      runningTexture,
-		FrameCount:   runningFrames,
-		CurrentFrame: 0,
-		FrameDelay:   6, // Running animation can be faster
-		FrameCounter: 0,
-		FrameSize:    runningImage.Width * runningImage.Height,
-	}
+	loadAnimatedGif(g, gifDir+"__Idle.gif", 8, Idle)
+	loadAnimatedGif(g, gifDir+"__Run.gif", 6, Running)
+	loadAnimatedGif(g, gifDir+"__Jump.gif", 6, Jumping)
+	loadAnimatedGif(g, gifDir+"__Fall.gif", 6, Falling)
+
 }
 
 func (g Game) UnloadAssets() {
@@ -47,5 +27,21 @@ func (g Game) UnloadAssets() {
 	for _, animData := range g.Hero.States {
 		rl.UnloadTexture(animData.Texture)
 		rl.UnloadImage(animData.Image)
+	}
+}
+
+// Load animated GIF for Running state
+func loadAnimatedGif(g *Game, imagePath string, frameDelay int32, state CharacterState) {
+	var frames int32 = 0
+	image := rl.LoadImageAnim(imagePath, &frames)
+	texture := rl.LoadTextureFromImage(image)
+	g.Hero.States[state] = AnimationData{
+		Image:        image,
+		Texture:      texture,
+		FrameCount:   frames,
+		CurrentFrame: 0,
+		FrameDelay:   frameDelay,
+		FrameCounter: 0,
+		FrameSize:    image.Width * image.Height,
 	}
 }

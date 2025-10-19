@@ -18,7 +18,7 @@ func (g *Game) DrawCharacter(state CharacterState) {
 	// Source rectangle for the texture (entire frame)
 	sourceRec = rl.Rectangle{X: 0, Y: 0, Width: frameWidth, Height: frameHeight}
 	// Destination rectangle at the character's position, scaling width to -1.7 * width for facing left (mirrored), or 1.7 * width for right
-	if g.Hero.FacingDirection == Left {
+	if g.Hero.MovementDirection == Left || g.Hero.MovementDirection == UpLeft || g.Hero.MovementDirection == DownLeft {
 		sourceRec = rl.Rectangle{X: 0, Y: 0, Width: -frameWidth, Height: frameHeight}
 		destRec = rl.Rectangle{
 			X:      pos.X,

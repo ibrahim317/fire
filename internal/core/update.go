@@ -7,7 +7,7 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-// UpdateCharacterAnimation updates the animation frame for a given character state
+// Updates the animation frame for a given character state
 func (g *Game) UpdateCharacterAnimation(state CharacterState) {
 	animData := g.Hero.States[state]
 	if animData.FrameCount <= 1 {
@@ -37,14 +37,31 @@ func (g *Game) UpdateCharacterAnimation(state CharacterState) {
 	g.Hero.States[state] = animData
 }
 
-func (c *Character) UpdateFacingDirection(direction FacingDirection) {
-	c.FacingDirection = direction
+func (c *Character) UpdateMovementDirection(direction MovementDirection) {
+	c.MovementDirection = direction
 }
 
 func (c *Character) UpdatePosition() {
-	if c.FacingDirection == Left {
+	switch c.MovementDirection {
+	case Left:
 		c.Position.X = c.Position.X - 2.5
-	} else {
+	case Right:
 		c.Position.X = c.Position.X + 2.5
+	case Up:
+		c.Position.Y = c.Position.Y - 2.5
+	case UpRight:
+		c.Position.X = c.Position.X + 2.5
+		c.Position.Y = c.Position.Y - 2.5
+	case UpLeft:
+		c.Position.X = c.Position.X - 2.5
+		c.Position.Y = c.Position.Y - 2.5
+	case Down:
+		c.Position.Y = c.Position.Y + 2.5
+	case DownRight:
+		c.Position.X = c.Position.X + 2.5
+		c.Position.Y = c.Position.Y + 2.5
+	case DownLeft:
+		c.Position.X = c.Position.X - 2.5
+		c.Position.Y = c.Position.Y + 2.5
 	}
 }
