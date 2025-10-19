@@ -38,4 +38,5 @@ func (g *Game) DrawCharacter(state CharacterState) {
 	origin = rl.Vector2{X: 0, Y: 0}
 
 	rl.DrawTexturePro(animData.Texture, sourceRec, destRec, origin, 0, rl.White)
+	rl.DrawRectangleLines(int32(pos.X), int32(pos.Y), int32(destRec.Width), int32(destRec.Height), rl.Red)
 }

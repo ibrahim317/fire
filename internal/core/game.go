@@ -13,6 +13,7 @@ type Game struct {
 	ScreenWidth  int32
 	ScreenHeight int32
 	Hero         Character
+	Gravity      float32
 }
 
 type CharacterState int
@@ -52,12 +53,17 @@ type Character struct {
 	CurrentState      CharacterState
 	MovementDirection MovementDirection
 	Position          rl.Vector2
+	Velocity          rl.Vector2
+	Acceleration      rl.Vector2
 }
 
 func (g *Game) Init() {
 	g.ScreenWidth = 800
 	g.ScreenHeight = 600
+	g.Gravity = 0.6
+	g.Hero.Velocity = rl.Vector2{X: 0, Y: 0}
+	g.Hero.Acceleration = rl.Vector2{X: 0, Y: 0}
 	g.Hero.States = make(map[CharacterState]AnimationData)
 	g.Hero.CurrentState = Idle
-	g.Hero.Position = rl.Vector2{X: 0, Y: 558 - 136}
+	g.Hero.Position = rl.Vector2{X: 0, Y: 0}
 }

@@ -1,7 +1,7 @@
 1. Background (done)
 2. draw maps using blocks (20%)
-3. character movement (80%)
-4. character/blocks collosion (0%)
+3. character movement (90%)
+4. character/blocks collosion and gravity (0%)
 5. test maps
 6. add mobs (logic, placement, movement)
 7. create levels

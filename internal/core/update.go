@@ -42,26 +42,16 @@ func (c *Character) UpdateMovementDirection(direction MovementDirection) {
 }
 
 func (c *Character) UpdatePosition() {
-	switch c.MovementDirection {
-	case Left:
-		c.Position.X = c.Position.X - 2.5
-	case Right:
-		c.Position.X = c.Position.X + 2.5
-	case Up:
-		c.Position.Y = c.Position.Y - 2.5
-	case UpRight:
-		c.Position.X = c.Position.X + 2.5
-		c.Position.Y = c.Position.Y - 2.5
-	case UpLeft:
-		c.Position.X = c.Position.X - 2.5
-		c.Position.Y = c.Position.Y - 2.5
-	case Down:
-		c.Position.Y = c.Position.Y + 2.5
-	case DownRight:
-		c.Position.X = c.Position.X + 2.5
-		c.Position.Y = c.Position.Y + 2.5
-	case DownLeft:
-		c.Position.X = c.Position.X - 2.5
-		c.Position.Y = c.Position.Y + 2.5
-	}
+	c.Position.X = c.Position.X + c.Velocity.X
+	c.Position.Y = c.Position.Y + c.Velocity.Y
+}
+
+func (c *Character) UpdateVelocity(velocity rl.Vector2) {
+	c.Velocity.X = velocity.X + c.Acceleration.X
+	c.Velocity.Y = velocity.Y + c.Acceleration.Y
+}
+
+func (g *Game) UpdateAcceleration(impactForce rl.Vector2) {
+	g.Hero.Acceleration.X += impactForce.X
+	g.Hero.Acceleration.Y += impactForce.Y + g.Gravity*0.2
 }
