@@ -1,27 +1,36 @@
 package core
 
 import (
+	"os"
+	"path/filepath"
+	"sync"
+
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
+var (
+	projectRootOnce sync.Once
+	projectRoot     string
+)
+
 func (g *Game) LoadAssets() {
-	g.FontEmoji = rl.LoadFont("resources/fonts/dejavu.fnt")
-	g.Bg = rl.LoadTexture("resources/background/Background.png")
-	g.GrassBlock = rl.LoadTexture("resources/assets/blocks/grass.png")
+	g.FontEmoji = rl.LoadFont(resourcePath("resources/fonts/dejavu.fnt"))
+	g.Bg = rl.LoadTexture(resourcePath("resources/background/Background.png"))
+	g.GrassTile = rl.LoadTexture(resourcePath("resources/assets/tiles/grass.png"))
 
-	gifDir := "resources/character/colour2/no_outline/120x80_gifs/"
+	gifDir := resourcePath("resources/character/colour2/no_outline/120x80_gifs/")
 
-	loadAnimatedGif(g, gifDir+"__Idle.gif", 8, Idle)
-	loadAnimatedGif(g, gifDir+"__Run.gif", 6, Running)
-	loadAnimatedGif(g, gifDir+"__Jump.gif", 6, Jumping)
-	loadAnimatedGif(g, gifDir+"__Fall.gif", 6, Falling)
+	loadAnimatedGif(g, gifDir+"/__Idle.gif", 8, Idle)
+	loadAnimatedGif(g, gifDir+"/__Run.gif", 6, Running)
+	loadAnimatedGif(g, gifDir+"/__Jump.gif", 6, Jumping)
+	loadAnimatedGif(g, gifDir+"/__Fall.gif", 6, Falling)
 
 }
 
 func (g Game) UnloadAssets() {
 	rl.UnloadFont(g.FontEmoji)
 	rl.UnloadTexture(g.Bg)
-	rl.UnloadTexture(g.GrassBlock)
+	rl.UnloadTexture(g.GrassTile)
 
 	// Unload animated textures and images
 	for _, animData := range g.Hero.States {
@@ -44,4 +53,41 @@ func loadAnimatedGif(g *Game, imagePath string, frameDelay int32, state Characte
 		FrameCounter: 0,
 		FrameSize:    image.Width * image.Height,
 	}
+}
+
+func resourcePath(rel string) string {
+	root := resolveProjectRoot()
+	return filepath.Join(root, rel)
+}
+
+func resolveProjectRoot() string {
+	projectRootOnce.Do(func() {
+		if root, err := findProjectRoot(); err == nil {
+			projectRoot = root
+		} else {
+			projectRoot = "."
+		}
+	})
+	return projectRoot
+}
+
+func findProjectRoot() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	for {
+		if _, statErr := os.Stat(filepath.Join(dir, "resources")); statErr == nil {
+			return dir, nil
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+
+	return "", os.ErrNotExist
 }

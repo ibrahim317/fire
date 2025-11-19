@@ -9,10 +9,12 @@ const FPS = 60
 type Game struct {
 	FontEmoji    rl.Font
 	Bg           rl.Texture2D
-	GrassBlock   rl.Texture2D
+	GrassTile    rl.Texture2D
 	ScreenWidth  int32
 	ScreenHeight int32
+	HeroScaling  float32
 	Hero         Character
+	Map          LevelMap
 	Gravity      float32
 }
 
@@ -55,12 +57,14 @@ type Character struct {
 	Position          rl.Vector2
 	Velocity          rl.Vector2
 	Acceleration      rl.Vector2
+	IsOnGround        bool
 }
 
 func (g *Game) Init() {
 	g.ScreenWidth = 800
 	g.ScreenHeight = 600
 	g.Gravity = 0.6
+	g.HeroScaling = 1.7
 	g.Hero.Velocity = rl.Vector2{X: 0, Y: 0}
 	g.Hero.Acceleration = rl.Vector2{X: 0, Y: 0}
 	g.Hero.States = make(map[CharacterState]AnimationData)

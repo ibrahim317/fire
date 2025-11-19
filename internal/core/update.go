@@ -42,8 +42,10 @@ func (c *Character) UpdateMovementDirection(direction MovementDirection) {
 }
 
 func (c *Character) UpdatePosition() {
-	c.Position.X = c.Position.X + c.Velocity.X
-	c.Position.Y = c.Position.Y + c.Velocity.Y
+	if !c.IsOnGround {
+		c.Position.Y += c.Velocity.Y
+	}
+	c.Position.X += c.Velocity.X
 }
 
 func (c *Character) UpdateVelocity(velocity rl.Vector2) {
@@ -51,7 +53,48 @@ func (c *Character) UpdateVelocity(velocity rl.Vector2) {
 	c.Velocity.Y = velocity.Y + c.Acceleration.Y
 }
 
-func (g *Game) UpdateAcceleration(impactForce rl.Vector2) {
+func (g *Game) UpdateHeroAcceleration(impactForce rl.Vector2) {
+	if g.Hero.IsOnGround {
+		g.Hero.Acceleration.Y = 0
+	} else {
+		g.Hero.Acceleration.Y += impactForce.Y + g.Gravity*0.2
+	}
 	g.Hero.Acceleration.X += impactForce.X
-	g.Hero.Acceleration.Y += impactForce.Y + g.Gravity*0.2
+}
+
+func CheckCoiliotion(r1, r2 rl.Rectangle) bool {
+	r1LeftEdge, r1TopEdge, r1RightEdge, r1BottomEdge := getEdges(r1)
+	r2LeftEdge, r2TopEdge, r2RightEdge, r2BottomEdge := getEdges(r2)
+
+	// if r1 is on the right of r2 OR if r1 is on the left of r2
+	if r1LeftEdge > r2RightEdge || r1RightEdge < r2LeftEdge {
+		return false
+	}
+
+	// if r1 is above r2 OR r1 is under r2
+	if r1BottomEdge < r2TopEdge || r1TopEdge > r2BottomEdge {
+		return false
+	}
+
+	return true
+}
+
+// return the edges of Rectangle clock-wise order
+func getEdges(r rl.Rectangle) (float32, float32, float32, float32) {
+	return r.X, r.Y, r.X + r.Width, r.Y + r.Height
+}
+
+func (g *Game) CheckCollisionWithMap() {
+	for _, tile := range g.Map.Tiles {
+		heroRect := rl.Rectangle{X: g.Hero.Position.X, Y: g.Hero.Position.Y, Width: float32(g.GrassTile.Width), Height: float32(g.GrassTile.Height)}
+		heroRect.Width = g.HeroScaling * float32(g.Hero.States[g.Hero.CurrentState].Texture.Width)
+		heroRect.Height = g.HeroScaling * float32(g.Hero.States[g.Hero.CurrentState].Texture.Height)
+		tileRect := rl.Rectangle{X: tile.X, Y: tile.Y, Width: float32(g.GrassTile.Width), Height: float32(g.GrassTile.Height)}
+		if CheckCoiliotion(heroRect, tileRect) {
+			g.Hero.IsOnGround = true
+			return
+		} else {
+			g.Hero.IsOnGround = false
+		}
+	}
 }

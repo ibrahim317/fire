@@ -18,11 +18,11 @@ func main() {
 	rl.SetTargetFPS(core.FPS)
 	defer rl.CloseWindow() // This will close the window when main exits
 
-
 	// Load assets and set up cleanup
 	game.LoadAssets()
 	defer game.UnloadAssets()
 
+	game.Map = core.InitMap(&game)
 	// Game loop
 	for !rl.WindowShouldClose() {
 		logic.Update(&game)
