@@ -42,15 +42,13 @@ func (c *Character) UpdateMovementDirection(direction MovementDirection) {
 }
 
 func (c *Character) UpdatePosition() {
-	if !c.IsOnGround {
-		c.Position.Y += c.Velocity.Y
-	}
+	c.Position.Y += c.Velocity.Y
 	c.Position.X += c.Velocity.X
 }
 
 func (c *Character) UpdateVelocity(velocity rl.Vector2) {
-	c.Velocity.X = velocity.X + c.Acceleration.X
-	c.Velocity.Y = velocity.Y + c.Acceleration.Y
+	c.Velocity.X = velocity.X*2 + c.Acceleration.X
+	c.Velocity.Y = velocity.Y*2 + c.Acceleration.Y
 }
 
 func (g *Game) UpdateHeroAcceleration(impactForce rl.Vector2) {
@@ -62,21 +60,38 @@ func (g *Game) UpdateHeroAcceleration(impactForce rl.Vector2) {
 	g.Hero.Acceleration.X += impactForce.X
 }
 
-func CheckCoiliotion(r1, r2 rl.Rectangle) bool {
-	r1LeftEdge, r1TopEdge, r1RightEdge, r1BottomEdge := getEdges(r1)
-	r2LeftEdge, r2TopEdge, r2RightEdge, r2BottomEdge := getEdges(r2)
+func CheckCollisionDirection(r1, r2 rl.Rectangle) rl.Vector2 {
+	r1Left, r1Top, r1Right, r1Bottom := getEdges(r1)
+	r2Left, r2Top, r2Right, r2Bottom := getEdges(r2)
 
-	// if r1 is on the right of r2 OR if r1 is on the left of r2
-	if r1LeftEdge > r2RightEdge || r1RightEdge < r2LeftEdge {
-		return false
+	// No collision, return zero vector
+	if r1Left > r2Right || r1Right < r2Left || r1Bottom < r2Top || r1Top > r2Bottom {
+		return rl.Vector2{X: 0, Y: 0}
 	}
 
-	// if r1 is above r2 OR r1 is under r2
-	if r1BottomEdge < r2TopEdge || r1TopEdge > r2BottomEdge {
-		return false
+	// Calculate overlap on each side
+	overlapLeft := r1Right - r2Left
+	overlapRight := r2Right - r1Left
+	overlapTop := r1Bottom - r2Top
+	overlapBottom := r2Bottom - r1Top
+
+	// Find the minimum overlap direction and return corresponding unit vector
+	minOverlap := overlapLeft
+	unitVec := rl.Vector2{X: -1, Y: 0} // left
+
+	if overlapRight < minOverlap {
+		minOverlap = overlapRight
+		unitVec = rl.Vector2{X: 1, Y: 0} // right
+	}
+	if overlapTop < minOverlap {
+		minOverlap = overlapTop
+		unitVec = rl.Vector2{X: 0, Y: -1} // top
+	}
+	if overlapBottom < minOverlap {
+		unitVec = rl.Vector2{X: 0, Y: 1} // bottom (ground)
 	}
 
-	return true
+	return unitVec
 }
 
 // return the edges of Rectangle clock-wise order
@@ -90,11 +105,39 @@ func (g *Game) CheckCollisionWithMap() {
 		heroRect.Width = g.HeroScaling * float32(g.Hero.States[g.Hero.CurrentState].Texture.Width)
 		heroRect.Height = g.HeroScaling * float32(g.Hero.States[g.Hero.CurrentState].Texture.Height)
 		tileRect := rl.Rectangle{X: tile.X, Y: tile.Y, Width: float32(g.GrassTile.Width), Height: float32(g.GrassTile.Height)}
-		if CheckCoiliotion(heroRect, tileRect) {
-			g.Hero.IsOnGround = true
+		collisionRec := rl.GetCollisionRec(heroRect, tileRect)
+		collisionRecVector := rl.Vector2{X: collisionRec.Width, Y: collisionRec.Height}
+		collisionDirection := CheckCollisionDirection(heroRect, tileRect)
+
+		if collisionDirection.Y != 0 {
+			g.Hero.Position = rl.Vector2Add(g.Hero.Position, rl.Vector2Multiply(collisionDirection, collisionRecVector))
+			if collisionDirection.Y*g.Hero.Velocity.Y < 0 {
+				g.Hero.UpdateVelocity(rl.Vector2{X: g.Hero.Velocity.X, Y: 0})
+			}
+
+			if collisionDirection.Y == -1 {
+				g.Hero.IsOnGround = true
+			}
 			return
-		} else {
-			g.Hero.IsOnGround = false
+		} else if collisionDirection.X != 0 {
+			g.Hero.Position = rl.Vector2Add(g.Hero.Position, rl.Vector2Multiply(collisionDirection, collisionRecVector))
+			if collisionDirection.X*g.Hero.Velocity.X < 0 {
+				g.Hero.UpdateVelocity(rl.Vector2{X: 0, Y: g.Hero.Velocity.Y})
+			}
 		}
+		g.Hero.IsOnGround = false
 	}
+}
+
+// After collision, resultVelocity is (2, 0)
+
+func XAxisCollision(r1, r2 rl.Rectangle) bool {
+	r1LeftEdge, _, r1RightEdge, _ := getEdges(r1)
+	r2LeftEdge, _, r2RightEdge, _ := getEdges(r2)
+
+	if r1LeftEdge > r2RightEdge || r1RightEdge < r2LeftEdge {
+		return true
+	}
+
+	return false
 }

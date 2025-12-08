@@ -39,6 +39,7 @@ func (g *Game) DrawMap() {
 		sourceRec := rl.Rectangle{X: 0, Y: 0, Width: tileWidth, Height: tileHeight}
 		destRec := rl.Rectangle{X: tile.X, Y: tile.Y, Width: tileWidth, Height: tileHeight}
 		rl.DrawTexturePro(texture, sourceRec, destRec, rl.Vector2{X: 0, Y: 0}, 0, rl.White)
+		rl.DrawRectangleLines(int32(tile.X), int32(tile.Y), int32(tileWidth), int32(tileHeight), rl.Red)
 	}
 }
 
