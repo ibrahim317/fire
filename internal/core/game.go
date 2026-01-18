@@ -10,6 +10,8 @@ type Game struct {
 	FontEmoji    rl.Font
 	Bg           rl.Texture2D
 	GrassTile    rl.Texture2D
+	HealthHeart  rl.Texture2D
+	Mob          Mob
 	ScreenWidth  int32
 	ScreenHeight int32
 	HeroScaling  float32
@@ -58,6 +60,10 @@ type Character struct {
 	Velocity          rl.Vector2
 	Acceleration      rl.Vector2
 	IsOnGround        bool
+}
+
+type Mob struct {
+	AnimationData AnimationData
 }
 
 func (g *Game) Init() {

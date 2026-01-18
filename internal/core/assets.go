@@ -17,8 +17,9 @@ func (g *Game) LoadAssets() {
 	g.FontEmoji = rl.LoadFont(resourcePath("resources/fonts/dejavu.fnt"))
 	g.Bg = rl.LoadTexture(resourcePath("resources/background/Background.png"))
 	g.GrassTile = rl.LoadTexture(resourcePath("resources/assets/tiles/grass.png"))
-
+	g.HealthHeart = rl.LoadTexture(resourcePath("resources/assets/heart.png"))
 	gifDir := resourcePath("resources/character/colour2/no_outline/120x80_gifs/")
+	loadSpriteSheet(g, resourcePath("resources/mob/Snail/walk-Sheet.png"), 8, 8, 48*32)
 
 	loadAnimatedGif(g, gifDir+"/__Idle.gif", 8, Idle)
 	loadAnimatedGif(g, gifDir+"/__Run.gif", 6, Running)
@@ -52,6 +53,20 @@ func loadAnimatedGif(g *Game, imagePath string, frameDelay int32, state Characte
 		FrameDelay:   frameDelay,
 		FrameCounter: 0,
 		FrameSize:    image.Width * image.Height,
+	}
+}
+
+func loadSpriteSheet(g *Game, imagePath string, frameCount int32, frameDelay int32, frameSize int32) {
+	image := rl.LoadImage(imagePath)
+	texture := rl.LoadTextureFromImage(image)
+	g.Mob.AnimationData = AnimationData{
+		Image:        image,
+		Texture:      texture,
+		FrameCount:   frameCount,
+		CurrentFrame: 0,
+		FrameDelay:   frameDelay,
+		FrameCounter: 0,
+		FrameSize:    frameSize,
 	}
 }
 

@@ -8,8 +8,20 @@ import (
 )
 
 // Updates the animation frame for a given character state
-func (g *Game) UpdateCharacterAnimation(state CharacterState) {
-	animData := g.Hero.States[state]
+func (g *Game) UpdateCharacterAnimation() {
+	animData := g.Hero.States[g.Hero.CurrentState]
+	UpdateAnimation(&animData)
+	g.Hero.States[g.Hero.CurrentState] = animData
+}
+
+func (g *Game) UpdateMobAnimation() {
+	animData := g.Mob.AnimationData
+	UpdateAnimation(&animData)
+	g.Mob.AnimationData = animData
+}
+
+func UpdateAnimation(animData *AnimationData) {
+
 	if animData.FrameCount <= 1 {
 		return // No animation needed for single frame
 	}
@@ -33,8 +45,6 @@ func (g *Game) UpdateCharacterAnimation(state CharacterState) {
 		animData.FrameCounter = 0
 	}
 
-	// Update the animation data in the map
-	g.Hero.States[state] = animData
 }
 
 func (c *Character) UpdateMovementDirection(direction MovementDirection) {
@@ -100,17 +110,23 @@ func getEdges(r rl.Rectangle) (float32, float32, float32, float32) {
 }
 
 func (g *Game) CheckCollisionWithMap() {
+
+	g.Hero.IsOnGround = false
 	for _, tile := range g.Map.Tiles {
-		heroRect := rl.Rectangle{X: g.Hero.Position.X, Y: g.Hero.Position.Y, Width: float32(g.GrassTile.Width), Height: float32(g.GrassTile.Height)}
-		heroRect.Width = g.HeroScaling * float32(g.Hero.States[g.Hero.CurrentState].Texture.Width)
-		heroRect.Height = g.HeroScaling * float32(g.Hero.States[g.Hero.CurrentState].Texture.Height)
+		heroRect := rl.Rectangle{X: g.Hero.Position.X,
+			Y:      g.Hero.Position.Y,
+			Width:  float32(g.Hero.States[g.Hero.CurrentState].Texture.Width) * g.HeroScaling,
+			Height: float32(g.Hero.States[g.Hero.CurrentState].Texture.Height) * g.HeroScaling,
+		}
 		tileRect := rl.Rectangle{X: tile.X, Y: tile.Y, Width: float32(g.GrassTile.Width), Height: float32(g.GrassTile.Height)}
 		collisionRec := rl.GetCollisionRec(heroRect, tileRect)
 		collisionRecVector := rl.Vector2{X: collisionRec.Width, Y: collisionRec.Height}
 		collisionDirection := CheckCollisionDirection(heroRect, tileRect)
 
 		if collisionDirection.Y != 0 {
-			g.Hero.Position = rl.Vector2Add(g.Hero.Position, rl.Vector2Multiply(collisionDirection, collisionRecVector))
+
+			correctionY := collisionDirection.Y * collisionRecVector.Y
+			g.Hero.Position.Y += correctionY
 			if collisionDirection.Y*g.Hero.Velocity.Y < 0 {
 				g.Hero.UpdateVelocity(rl.Vector2{X: g.Hero.Velocity.X, Y: 0})
 			}
@@ -118,14 +134,16 @@ func (g *Game) CheckCollisionWithMap() {
 			if collisionDirection.Y == -1 {
 				g.Hero.IsOnGround = true
 			}
-			return
-		} else if collisionDirection.X != 0 {
-			g.Hero.Position = rl.Vector2Add(g.Hero.Position, rl.Vector2Multiply(collisionDirection, collisionRecVector))
+			continue
+		}
+		if collisionDirection.X != 0 {
+			correctionX := collisionDirection.X * collisionRecVector.X
+			g.Hero.Position.X += correctionX
 			if collisionDirection.X*g.Hero.Velocity.X < 0 {
 				g.Hero.UpdateVelocity(rl.Vector2{X: 0, Y: g.Hero.Velocity.Y})
 			}
+			continue
 		}
-		g.Hero.IsOnGround = false
 	}
 }
 
@@ -140,4 +158,25 @@ func XAxisCollision(r1, r2 rl.Rectangle) bool {
 	}
 
 	return false
+}
+
+func (g *Game) HandleMovement(velocity rl.Vector2) {
+	if velocity.X < 0 {
+		if velocity.Y < 0 {
+			g.Hero.UpdateMovementDirection(UpLeft)
+		} else if velocity.Y == 0 {
+			g.Hero.UpdateMovementDirection(Left)
+		}
+	} else if velocity.X > 0 {
+		if velocity.Y < 0 {
+			g.Hero.UpdateMovementDirection(UpRight)
+		} else if velocity.Y == 0 {
+			g.Hero.UpdateMovementDirection(Right)
+		}
+	} else {
+		if velocity.Y < 0 {
+			g.Hero.UpdateMovementDirection(Up)
+		}
+	}
+	g.Hero.UpdateVelocity(velocity)
 }

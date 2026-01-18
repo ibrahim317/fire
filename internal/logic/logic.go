@@ -6,33 +6,35 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
+// common factor: ac+bc = c(a+b)
+
 func Update(game *core.Game) {
 	// Update character animations
-	game.UpdateCharacterAnimation(game.Hero.CurrentState)
-	if rl.IsKeyDown(rl.KeyUp) {
-		if rl.IsKeyDown(rl.KeyLeft) {
-			game.Hero.UpdateMovementDirection(core.UpLeft)
-			game.Hero.UpdateVelocity(rl.Vector2{X: -1, Y: -1.6})
-		} else if rl.IsKeyDown(rl.KeyRight) {
-			game.Hero.UpdateMovementDirection(core.UpRight)
-			game.Hero.UpdateVelocity(rl.Vector2{X: 1, Y: -1})
+	game.UpdateCharacterAnimation()
+	game.UpdateMobAnimation()
+
+	right := rl.IsKeyDown(rl.KeyRight)
+	left := rl.IsKeyDown(rl.KeyLeft)
+	up := rl.IsKeyDown(rl.KeyUp)
+
+	if up {
+		if left {
+			game.HandleMovement(rl.Vector2{X: -1, Y: -1.6})
+		} else if right {
+			game.HandleMovement(rl.Vector2{X: 1, Y: -1.6})
 		} else {
-			game.Hero.UpdateMovementDirection(core.Up)
-			game.Hero.UpdateVelocity(rl.Vector2{X: 0, Y: -1})
+			game.HandleMovement(rl.Vector2{X: 0, Y: -1.6})
 		}
 		game.Hero.CurrentState = core.Jumping
-	} else if rl.IsKeyDown(rl.KeyLeft) || rl.IsKeyDown(rl.KeyRight) {
-		if rl.IsKeyDown(rl.KeyLeft) {
-			game.Hero.UpdateVelocity(rl.Vector2{X: -1, Y: 0})
-			game.Hero.UpdateMovementDirection(core.Left)
-		} else {
-			game.Hero.UpdateMovementDirection(core.Right)
-			game.Hero.UpdateVelocity(rl.Vector2{X: 1, Y: 0})
-		}
+	} else if left {
+		game.HandleMovement(rl.Vector2{X: -1, Y: 0})
+		game.Hero.CurrentState = core.Running
+	} else if right {
+		game.HandleMovement(rl.Vector2{X: 1, Y: 0})
 		game.Hero.CurrentState = core.Running
 	} else {
 		game.Hero.CurrentState = core.Idle
-		game.Hero.UpdateVelocity(rl.Vector2{X: 0, Y: 0})
+		game.HandleMovement(rl.Vector2{X: 0, Y: 0})
 	}
 
 	game.CheckCollisionWithMap()

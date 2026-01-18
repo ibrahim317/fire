@@ -13,8 +13,9 @@ func Draw(game *core.Game) {
 		rl.White)
 
 	// Draw character with animation
-	game.DrawMap()
 	game.DrawCharacter()
-
+	game.DrawMap()
+	game.DrawHealth()
+	game.DrawMob()
 	rl.EndDrawing()
 }

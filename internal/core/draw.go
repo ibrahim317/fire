@@ -39,8 +39,22 @@ func (g *Game) DrawMap() {
 		sourceRec := rl.Rectangle{X: 0, Y: 0, Width: tileWidth, Height: tileHeight}
 		destRec := rl.Rectangle{X: tile.X, Y: tile.Y, Width: tileWidth, Height: tileHeight}
 		rl.DrawTexturePro(texture, sourceRec, destRec, rl.Vector2{X: 0, Y: 0}, 0, rl.White)
-		rl.DrawRectangleLines(int32(tile.X), int32(tile.Y), int32(tileWidth), int32(tileHeight), rl.Red)
 	}
+}
+
+func (g *Game) DrawHealth() {
+	rl.DrawTextureEx(g.HealthHeart, rl.Vector2{X: 10, Y: 10}, 0.0, 0.02, rl.White)
+	rl.DrawTextureEx(g.HealthHeart, rl.Vector2{X: 50, Y: 10}, 0.0, 0.02, rl.White)
+	rl.DrawTextureEx(g.HealthHeart, rl.Vector2{X: 90, Y: 10}, 0.0, 0.02, rl.White)
+	rl.DrawTextureEx(g.HealthHeart, rl.Vector2{X: 130, Y: 10}, 0.0, 0.02, rl.White)
+	rl.DrawTextureEx(g.HealthHeart, rl.Vector2{X: 170, Y: 10}, 0.0, 0.02, rl.White)
+}
+
+func (g *Game) DrawMob() {
+	currentFrame := (int32(rl.GetFrameTime() * 10)) % 8.0
+	sourceRec := rl.Rectangle{X: 0, Y: 32, Width: 48, Height: 32}
+	sourceRec.X = float32(currentFrame) * 48
+	rl.DrawTextureRec(g.Mob.AnimationData.Texture, sourceRec, rl.Vector2{X: 10, Y: 450}, rl.White)
 }
 
 func (g *Game) textureForTile(tileType TileType) rl.Texture2D {
