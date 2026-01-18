@@ -35,12 +35,14 @@ func UpdateAnimation(animData *AnimationData) {
 			animData.CurrentFrame = 0
 		}
 
-		// Calculate memory offset for current frame
-		nextFrameDataOffset := uint32(animData.Image.Width * animData.Image.Height * 4 * animData.CurrentFrame)
+		if !animData.IsSpriteSheet {
+			// Calculate memory offset for current frame
+			nextFrameDataOffset := uint32(animData.Image.Width * animData.Image.Height * 4 * animData.CurrentFrame)
 
-		// Update GPU texture with current frame data
-		rl.UpdateTexture(animData.Texture,
-			unsafe.Slice((*color.RGBA)(unsafe.Pointer(uintptr(animData.Image.Data)+uintptr(nextFrameDataOffset))), animData.FrameSize))
+			// Update GPU texture with current frame data
+			rl.UpdateTexture(animData.Texture,
+				unsafe.Slice((*color.RGBA)(unsafe.Pointer(uintptr(animData.Image.Data)+uintptr(nextFrameDataOffset))), animData.FrameSize))
+		}
 
 		animData.FrameCounter = 0
 	}
@@ -93,12 +95,14 @@ func CheckCollisionDirection(r1, r2 rl.Rectangle) rl.Vector2 {
 		minOverlap = overlapRight
 		unitVec = rl.Vector2{X: 1, Y: 0} // right
 	}
-	if overlapTop < minOverlap {
+	// Prefer vertical collision resolution to avoid "ghost walls" when moving over flat ground
+	if overlapTop <= minOverlap {
 		minOverlap = overlapTop
 		unitVec = rl.Vector2{X: 0, Y: -1} // top
 	}
 	if overlapBottom < minOverlap {
-		unitVec = rl.Vector2{X: 0, Y: 1} // bottom (ground)
+		minOverlap = overlapBottom
+		unitVec = rl.Vector2{X: 0, Y: 1} // bottom (ceiling)
 	}
 
 	return unitVec
@@ -110,22 +114,27 @@ func getEdges(r rl.Rectangle) (float32, float32, float32, float32) {
 }
 
 func (g *Game) CheckCollisionWithMap() {
-
 	g.Hero.IsOnGround = false
-	for _, tile := range g.Map.Tiles {
-		heroRect := rl.Rectangle{X: g.Hero.Position.X,
+
+	// Helper to get current hero rectangle
+	getHeroRect := func() rl.Rectangle {
+		return rl.Rectangle{
+			X:      g.Hero.Position.X,
 			Y:      g.Hero.Position.Y,
 			Width:  float32(g.Hero.States[g.Hero.CurrentState].Texture.Width) * g.HeroScaling,
 			Height: float32(g.Hero.States[g.Hero.CurrentState].Texture.Height) * g.HeroScaling,
 		}
+	}
+
+	// First pass: Resolve vertical collisions
+	for _, tile := range g.Map.Tiles {
+		heroRect := getHeroRect()
 		tileRect := rl.Rectangle{X: tile.X, Y: tile.Y, Width: float32(g.GrassTile.Width), Height: float32(g.GrassTile.Height)}
-		collisionRec := rl.GetCollisionRec(heroRect, tileRect)
-		collisionRecVector := rl.Vector2{X: collisionRec.Width, Y: collisionRec.Height}
 		collisionDirection := CheckCollisionDirection(heroRect, tileRect)
 
 		if collisionDirection.Y != 0 {
-
-			correctionY := collisionDirection.Y * collisionRecVector.Y
+			collisionRec := rl.GetCollisionRec(heroRect, tileRect)
+			correctionY := collisionDirection.Y * collisionRec.Height
 			g.Hero.Position.Y += correctionY
 			if collisionDirection.Y*g.Hero.Velocity.Y < 0 {
 				g.Hero.UpdateVelocity(rl.Vector2{X: g.Hero.Velocity.X, Y: 0})
@@ -134,15 +143,22 @@ func (g *Game) CheckCollisionWithMap() {
 			if collisionDirection.Y == -1 {
 				g.Hero.IsOnGround = true
 			}
-			continue
 		}
+	}
+
+	// Second pass: Resolve horizontal collisions
+	for _, tile := range g.Map.Tiles {
+		heroRect := getHeroRect()
+		tileRect := rl.Rectangle{X: tile.X, Y: tile.Y, Width: float32(g.GrassTile.Width), Height: float32(g.GrassTile.Height)}
+		collisionDirection := CheckCollisionDirection(heroRect, tileRect)
+
 		if collisionDirection.X != 0 {
-			correctionX := collisionDirection.X * collisionRecVector.X
+			collisionRec := rl.GetCollisionRec(heroRect, tileRect)
+			correctionX := collisionDirection.X * collisionRec.Width
 			g.Hero.Position.X += correctionX
 			if collisionDirection.X*g.Hero.Velocity.X < 0 {
 				g.Hero.UpdateVelocity(rl.Vector2{X: 0, Y: g.Hero.Velocity.Y})
 			}
-			continue
 		}
 	}
 }

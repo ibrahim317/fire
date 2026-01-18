@@ -18,6 +18,13 @@ type Game struct {
 	Hero         Character
 	Map          LevelMap
 	Gravity      float32
+	// Mode tracking
+	Mode     GameMode
+	MainMenu *MainMenu
+	Designer *Designer
+	Settings *SettingsMenu
+	// Game settings
+	HighlightBorders bool
 }
 
 type CharacterState int
@@ -43,13 +50,14 @@ const (
 )
 
 type AnimationData struct {
-	Image        *rl.Image
-	Texture      rl.Texture2D
-	FrameCount   int32
-	CurrentFrame int32
-	FrameDelay   int32
-	FrameCounter int32
-	FrameSize    int32
+	Image         *rl.Image
+	Texture       rl.Texture2D
+	FrameCount    int32
+	CurrentFrame  int32
+	FrameDelay    int32
+	FrameCounter  int32
+	FrameSize     int32
+	IsSpriteSheet bool
 }
 
 type Character struct {
@@ -76,4 +84,27 @@ func (g *Game) Init() {
 	g.Hero.States = make(map[CharacterState]AnimationData)
 	g.Hero.CurrentState = Idle
 	g.Hero.Position = rl.Vector2{X: 0, Y: 0}
+	g.Mode = ModeMainMenu
 }
+
+// InitUI initializes UI components (must be called after window creation)
+func (g *Game) InitUI() {
+	g.MainMenu = NewMainMenu(g.ScreenWidth, g.ScreenHeight)
+	g.Designer = NewDesigner(g)
+	g.Settings = NewSettingsMenu(g.ScreenWidth, g.ScreenHeight, &g.HighlightBorders)
+}
+
+// ReloadMap reloads the map from disk (for hot-reloading after design changes)
+func (g *Game) ReloadMap() {
+	g.Map = InitMap(g)
+}
+
+// ResetHeroPosition resets the hero to the starting position
+func (g *Game) ResetHeroPosition() {
+	g.Hero.Position = rl.Vector2{X: 0, Y: 0}
+	g.Hero.Velocity = rl.Vector2{X: 0, Y: 0}
+	g.Hero.Acceleration = rl.Vector2{X: 0, Y: 0}
+	g.Hero.CurrentState = Idle
+	g.Hero.IsOnGround = false
+}
+

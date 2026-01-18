@@ -46,13 +46,14 @@ func loadAnimatedGif(g *Game, imagePath string, frameDelay int32, state Characte
 	image := rl.LoadImageAnim(imagePath, &frames)
 	texture := rl.LoadTextureFromImage(image)
 	g.Hero.States[state] = AnimationData{
-		Image:        image,
-		Texture:      texture,
-		FrameCount:   frames,
-		CurrentFrame: 0,
-		FrameDelay:   frameDelay,
-		FrameCounter: 0,
-		FrameSize:    image.Width * image.Height,
+		Image:         image,
+		Texture:       texture,
+		FrameCount:    frames,
+		CurrentFrame:  0,
+		FrameDelay:    frameDelay,
+		FrameCounter:  0,
+		FrameSize:     image.Width * image.Height,
+		IsSpriteSheet: false,
 	}
 }
 
@@ -60,13 +61,14 @@ func loadSpriteSheet(g *Game, imagePath string, frameCount int32, frameDelay int
 	image := rl.LoadImage(imagePath)
 	texture := rl.LoadTextureFromImage(image)
 	g.Mob.AnimationData = AnimationData{
-		Image:        image,
-		Texture:      texture,
-		FrameCount:   frameCount,
-		CurrentFrame: 0,
-		FrameDelay:   frameDelay,
-		FrameCounter: 0,
-		FrameSize:    frameSize,
+		Image:         image,
+		Texture:       texture,
+		FrameCount:    frameCount,
+		CurrentFrame:  0,
+		FrameDelay:    frameDelay,
+		FrameCounter:  0,
+		FrameSize:     frameSize,
+		IsSpriteSheet: true,
 	}
 }
 

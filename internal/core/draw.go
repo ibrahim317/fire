@@ -27,7 +27,11 @@ func (g *Game) DrawCharacter() {
 	}
 
 	rl.DrawTexturePro(animData.Texture, sourceRec, destRec, origin, 0, rl.White)
-	rl.DrawRectangleLines(int32(pos.X), int32(pos.Y), int32(destRec.Width), int32(destRec.Height), rl.Red)
+
+	// Draw border if highlight is enabled
+	if g.HighlightBorders {
+		rl.DrawRectangleLines(int32(pos.X), int32(pos.Y), int32(destRec.Width), int32(destRec.Height), rl.Red)
+	}
 }
 
 func (g *Game) DrawMap() {
@@ -39,6 +43,11 @@ func (g *Game) DrawMap() {
 		sourceRec := rl.Rectangle{X: 0, Y: 0, Width: tileWidth, Height: tileHeight}
 		destRec := rl.Rectangle{X: tile.X, Y: tile.Y, Width: tileWidth, Height: tileHeight}
 		rl.DrawTexturePro(texture, sourceRec, destRec, rl.Vector2{X: 0, Y: 0}, 0, rl.White)
+
+		// Draw border if highlight is enabled
+		if g.HighlightBorders {
+			rl.DrawRectangleLines(int32(tile.X), int32(tile.Y), int32(tileWidth), int32(tileHeight), rl.Green)
+		}
 	}
 }
 
@@ -51,10 +60,16 @@ func (g *Game) DrawHealth() {
 }
 
 func (g *Game) DrawMob() {
-	currentFrame := (int32(rl.GetFrameTime() * 10)) % 8.0
-	sourceRec := rl.Rectangle{X: 0, Y: 32, Width: 48, Height: 32}
-	sourceRec.X = float32(currentFrame) * 48
-	rl.DrawTextureRec(g.Mob.AnimationData.Texture, sourceRec, rl.Vector2{X: 10, Y: 450}, rl.White)
+	animData := g.Mob.AnimationData
+	sourceRec := rl.Rectangle{X: 0, Y: 0, Width: 48, Height: 32}
+	sourceRec.X = float32(animData.CurrentFrame) * 48
+	mobPos := rl.Vector2{X: 10, Y: 450}
+	rl.DrawTextureRec(animData.Texture, sourceRec, mobPos, rl.White)
+
+	// Draw border if highlight is enabled
+	if g.HighlightBorders {
+		rl.DrawRectangleLines(int32(mobPos.X), int32(mobPos.Y), 48, 32, rl.Blue)
+	}
 }
 
 func (g *Game) textureForTile(tileType TileType) rl.Texture2D {

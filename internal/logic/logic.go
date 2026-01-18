@@ -17,6 +17,7 @@ func Update(game *core.Game) {
 	left := rl.IsKeyDown(rl.KeyLeft)
 	up := rl.IsKeyDown(rl.KeyUp)
 
+	// Handle input and update velocity
 	if up {
 		if left {
 			game.HandleMovement(rl.Vector2{X: -1, Y: -1.6})
@@ -37,10 +38,13 @@ func Update(game *core.Game) {
 		game.HandleMovement(rl.Vector2{X: 0, Y: 0})
 	}
 
+	// Move the hero first, then resolve collisions
+	game.Hero.UpdatePosition()
 	game.CheckCollisionWithMap()
+
+	// Update acceleration and state based on collision results
 	game.UpdateHeroAcceleration(rl.Vector2{X: 0, Y: 0})
 	if !game.Hero.IsOnGround {
 		game.Hero.CurrentState = core.Falling
 	}
-	game.Hero.UpdatePosition()
 }
