@@ -1,55 +1,49 @@
 package core
 
 import (
+	"fire/internal/ecs"
+
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 const FPS = 60
 
+// Game holds game configuration, assets, UI components, and the ECS world.
 type Game struct {
-	FontEmoji    rl.Font
-	Bg           rl.Texture2D
-	GrassTile    rl.Texture2D
-	HealthHeart  rl.Texture2D
-	Mob          Mob
+	// Screen settings
 	ScreenWidth  int32
 	ScreenHeight int32
-	HeroScaling  float32
-	Hero         Character
-	Map          LevelMap
-	Gravity      float32
+
+	// Assets
+	FontEmoji   rl.Font
+	Bg          rl.Texture2D
+	GrassTile   rl.Texture2D
+	HealthHeart rl.Texture2D
+
+	// Hero animation data (for spawning player entity)
+	HeroAnimations map[int]AnimationDataLegacy
+	HeroScaling    float32
+
+	// Mob animation data (for spawning mob entities)
+	MobAnimation AnimationDataLegacy
+
 	// Mode tracking
 	Mode     GameMode
 	MainMenu *MainMenu
 	Designer *Designer
 	Settings *SettingsMenu
+
 	// Game settings
 	HighlightBorders bool
+	Gravity          float32
+
+	// ECS World (used in game mode)
+	World *ecs.World
 }
 
-type CharacterState int
-
-const (
-	Idle CharacterState = iota
-	Running
-	Jumping
-	Falling
-)
-
-type MovementDirection int
-
-const (
-	Left MovementDirection = iota
-	Right
-	Up
-	UpRight
-	UpLeft
-	Down
-	DownRight
-	DownLeft
-)
-
-type AnimationData struct {
+// AnimationDataLegacy holds animation data for asset loading.
+// This is used during asset loading and converted to components when spawning entities.
+type AnimationDataLegacy struct {
 	Image         *rl.Image
 	Texture       rl.Texture2D
 	FrameCount    int32
@@ -60,51 +54,38 @@ type AnimationData struct {
 	IsSpriteSheet bool
 }
 
-type Character struct {
-	States            map[CharacterState]AnimationData
-	CurrentState      CharacterState
-	MovementDirection MovementDirection
-	Position          rl.Vector2
-	Velocity          rl.Vector2
-	Acceleration      rl.Vector2
-	IsOnGround        bool
-}
+// CharacterStateLegacy is used for asset loading keys.
+type CharacterStateLegacy int
 
-type Mob struct {
-	AnimationData AnimationData
-}
+const (
+	IdleLegacy CharacterStateLegacy = iota
+	RunningLegacy
+	JumpingLegacy
+	FallingLegacy
+)
 
 func (g *Game) Init() {
 	g.ScreenWidth = 800
 	g.ScreenHeight = 600
 	g.Gravity = 0.6
 	g.HeroScaling = 1.7
-	g.Hero.Velocity = rl.Vector2{X: 0, Y: 0}
-	g.Hero.Acceleration = rl.Vector2{X: 0, Y: 0}
-	g.Hero.States = make(map[CharacterState]AnimationData)
-	g.Hero.CurrentState = Idle
-	g.Hero.Position = rl.Vector2{X: 0, Y: 0}
+	g.HeroAnimations = make(map[int]AnimationDataLegacy)
 	g.Mode = ModeMainMenu
 }
 
-// InitUI initializes UI components (must be called after window creation)
+// InitUI initializes UI components (must be called after window creation).
 func (g *Game) InitUI() {
 	g.MainMenu = NewMainMenu(g.ScreenWidth, g.ScreenHeight)
 	g.Designer = NewDesigner(g)
 	g.Settings = NewSettingsMenu(g.ScreenWidth, g.ScreenHeight, &g.HighlightBorders)
 }
 
-// ReloadMap reloads the map from disk (for hot-reloading after design changes)
-func (g *Game) ReloadMap() {
-	g.Map = InitMap(g)
+// InitWorld creates a new ECS world for gameplay.
+func (g *Game) InitWorld() {
+	g.World = ecs.NewWorld()
 }
 
-// ResetHeroPosition resets the hero to the starting position
-func (g *Game) ResetHeroPosition() {
-	g.Hero.Position = rl.Vector2{X: 0, Y: 0}
-	g.Hero.Velocity = rl.Vector2{X: 0, Y: 0}
-	g.Hero.Acceleration = rl.Vector2{X: 0, Y: 0}
-	g.Hero.CurrentState = Idle
-	g.Hero.IsOnGround = false
+// GetHeroAnimationData returns animation data for a character state.
+func (g *Game) GetHeroAnimationData(state int) AnimationDataLegacy {
+	return g.HeroAnimations[state]
 }
-

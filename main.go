@@ -2,8 +2,7 @@ package main
 
 import (
 	"fire/internal/core"
-	"fire/internal/logic"
-	"fire/internal/render"
+	"fire/internal/systems"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -26,10 +25,6 @@ func main() {
 	// Initialize UI components (after window creation)
 	game.InitUI()
 
-	// Load map
-	game.Map = core.InitMap(&game)
-
-
 	// Game loop
 	for !rl.WindowShouldClose() {
 		switch game.Mode {
@@ -42,9 +37,8 @@ func main() {
 			if newMode != core.ModeMainMenu {
 				// Transitioning to a new mode
 				if newMode == core.ModeGame {
-					// Always reload map when entering game mode to see design changes
-					game.ReloadMap()
-					game.ResetHeroPosition()
+					// Initialize ECS world for gameplay
+					initGameWorld(&game)
 				}
 				game.Mode = newMode
 			}
@@ -56,8 +50,9 @@ func main() {
 				continue
 			}
 
-			logic.Update(&game)
-			render.Draw(&game)
+			// Run ECS systems
+			dt := rl.GetFrameTime()
+			game.World.Update(dt)
 
 		case core.ModeDesigner:
 			rl.BeginDrawing()
@@ -80,4 +75,31 @@ func main() {
 			}
 		}
 	}
+}
+
+// initGameWorld creates and initializes the ECS world for gameplay.
+func initGameWorld(game *core.Game) {
+	// Create new world
+	game.InitWorld()
+
+	// Spawn player entity
+	core.SpawnPlayer(game.World, game)
+
+	// Spawn mob entity
+	core.SpawnMob(game.World, game, 500, 450)
+
+	// Load and spawn map tiles
+	core.LoadAndSpawnMap(game.World, game.GrassTile)
+
+	// Register systems in execution order
+	game.World.AddSystem(systems.NewInputSystem())
+	game.World.AddSystem(systems.NewPhysicsSystem())
+	game.World.AddSystem(systems.NewCollisionSystem())
+	game.World.AddSystem(systems.NewAnimationSystem())
+	game.World.AddSystem(systems.NewRenderSystem(systems.RenderConfig{
+		Background:       game.Bg,
+		GrassTile:        game.GrassTile,
+		HealthHeart:      game.HealthHeart,
+		HighlightBorders: &game.HighlightBorders,
+	}))
 }

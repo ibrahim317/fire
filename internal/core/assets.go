@@ -14,38 +14,50 @@ var (
 )
 
 func (g *Game) LoadAssets() {
-	g.FontEmoji = rl.LoadFont(resourcePath("resources/fonts/dejavu.fnt"))
-	g.Bg = rl.LoadTexture(resourcePath("resources/background/Background.png"))
-	g.GrassTile = rl.LoadTexture(resourcePath("resources/assets/tiles/grass.png"))
-	g.HealthHeart = rl.LoadTexture(resourcePath("resources/assets/heart.png"))
-	gifDir := resourcePath("resources/character/colour2/no_outline/120x80_gifs/")
-	loadSpriteSheet(g, resourcePath("resources/mob/Snail/walk-Sheet.png"), 8, 8, 48*32)
+	g.FontEmoji = rl.LoadFont(ResourcePath("resources/fonts/dejavu.fnt"))
+	g.Bg = rl.LoadTexture(ResourcePath("resources/background/Background.png"))
+	g.GrassTile = rl.LoadTexture(ResourcePath("resources/assets/tiles/grass.png"))
+	g.HealthHeart = rl.LoadTexture(ResourcePath("resources/assets/heart.png"))
 
-	loadAnimatedGif(g, gifDir+"/__Idle.gif", 8, Idle)
-	loadAnimatedGif(g, gifDir+"/__Run.gif", 6, Running)
-	loadAnimatedGif(g, gifDir+"/__Jump.gif", 6, Jumping)
-	loadAnimatedGif(g, gifDir+"/__Fall.gif", 6, Falling)
+	gifDir := ResourcePath("resources/character/colour2/no_outline/120x80_gifs/")
 
+	// Load mob sprite sheet
+	g.MobAnimation = loadSpriteSheetData(ResourcePath("resources/mob/Snail/walk-Sheet.png"), 8, 8, 48*32)
+
+	// Load hero animations
+	g.HeroAnimations[int(IdleLegacy)] = loadAnimatedGifData(gifDir+"/__Idle.gif", 8)
+	g.HeroAnimations[int(RunningLegacy)] = loadAnimatedGifData(gifDir+"/__Run.gif", 6)
+	g.HeroAnimations[int(JumpingLegacy)] = loadAnimatedGifData(gifDir+"/__Jump.gif", 6)
+	g.HeroAnimations[int(FallingLegacy)] = loadAnimatedGifData(gifDir+"/__Fall.gif", 6)
 }
 
-func (g Game) UnloadAssets() {
+func (g *Game) UnloadAssets() {
 	rl.UnloadFont(g.FontEmoji)
 	rl.UnloadTexture(g.Bg)
 	rl.UnloadTexture(g.GrassTile)
+	rl.UnloadTexture(g.HealthHeart)
 
-	// Unload animated textures and images
-	for _, animData := range g.Hero.States {
+	// Unload hero animations
+	for _, animData := range g.HeroAnimations {
 		rl.UnloadTexture(animData.Texture)
-		rl.UnloadImage(animData.Image)
+		if animData.Image != nil {
+			rl.UnloadImage(animData.Image)
+		}
+	}
+
+	// Unload mob animation
+	rl.UnloadTexture(g.MobAnimation.Texture)
+	if g.MobAnimation.Image != nil {
+		rl.UnloadImage(g.MobAnimation.Image)
 	}
 }
 
-// Load animated GIF for Running state
-func loadAnimatedGif(g *Game, imagePath string, frameDelay int32, state CharacterState) {
+// loadAnimatedGifData loads a GIF animation and returns the data.
+func loadAnimatedGifData(imagePath string, frameDelay int32) AnimationDataLegacy {
 	var frames int32 = 0
 	image := rl.LoadImageAnim(imagePath, &frames)
 	texture := rl.LoadTextureFromImage(image)
-	g.Hero.States[state] = AnimationData{
+	return AnimationDataLegacy{
 		Image:         image,
 		Texture:       texture,
 		FrameCount:    frames,
@@ -57,10 +69,11 @@ func loadAnimatedGif(g *Game, imagePath string, frameDelay int32, state Characte
 	}
 }
 
-func loadSpriteSheet(g *Game, imagePath string, frameCount int32, frameDelay int32, frameSize int32) {
+// loadSpriteSheetData loads a sprite sheet and returns the data.
+func loadSpriteSheetData(imagePath string, frameCount int32, frameDelay int32, frameSize int32) AnimationDataLegacy {
 	image := rl.LoadImage(imagePath)
 	texture := rl.LoadTextureFromImage(image)
-	g.Mob.AnimationData = AnimationData{
+	return AnimationDataLegacy{
 		Image:         image,
 		Texture:       texture,
 		FrameCount:    frameCount,
@@ -72,7 +85,8 @@ func loadSpriteSheet(g *Game, imagePath string, frameCount int32, frameDelay int
 	}
 }
 
-func resourcePath(rel string) string {
+// ResourcePath returns the absolute path for a resource file.
+func ResourcePath(rel string) string {
 	root := resolveProjectRoot()
 	return filepath.Join(root, rel)
 }

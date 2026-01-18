@@ -18,6 +18,8 @@ type Designer struct {
 	StatusUntil   time.Time
 	SaveButton    rl.Rectangle
 	BackButton    rl.Rectangle
+	Map           LevelMap
+	GrassTile     rl.Texture2D
 }
 
 // NewDesigner creates a new designer instance
@@ -26,11 +28,13 @@ func NewDesigner(game *Game) *Designer {
 	tileHeight := float32(game.GrassTile.Height)
 
 	return &Designer{
-		MapPath:    resourcePath("maps/custom_map.json"),
+		MapPath:    ResourcePath("maps/custom_map.json"),
 		TileWidth:  tileWidth,
 		TileHeight: tileHeight,
 		SaveButton: rl.Rectangle{X: 20, Y: 20, Width: 140, Height: 44},
 		BackButton: rl.Rectangle{X: 170, Y: 20, Width: 140, Height: 44},
+		Map:        InitMapForDesigner(),
+		GrassTile:  game.GrassTile,
 	}
 }
 
@@ -46,7 +50,7 @@ func (d *Designer) Update(game *Game) GameMode {
 	if rl.IsMouseButtonPressed(rl.MouseLeftButton) {
 		// Check save button
 		if rl.CheckCollisionPointRec(mouse, d.SaveButton) {
-			if err := d.SaveMap(game); err != nil {
+			if err := d.SaveMap(); err != nil {
 				d.SetStatus(fmt.Sprintf("Save failed: %v", err), rl.Red)
 			} else {
 				d.SetStatus(
@@ -63,12 +67,12 @@ func (d *Designer) Update(game *Game) GameMode {
 		}
 
 		// Add tile
-		d.AddTileAt(game, mouse)
+		d.AddTileAt(mouse)
 		d.SetStatus("Tile added", rl.DarkGreen)
 	}
 
 	if rl.IsMouseButtonPressed(rl.MouseRightButton) {
-		if d.RemoveTileAt(game, mouse) {
+		if d.RemoveTileAt(mouse) {
 			d.SetStatus("Tile removed", rl.Orange)
 		}
 	}
@@ -82,26 +86,35 @@ func (d *Designer) Draw(game *Game) {
 	rl.DrawTextureEx(game.Bg, rl.Vector2{X: 0, Y: 0}, 0, 2.7, rl.White)
 
 	d.DrawGrid(game)
-	game.DrawMap()
+	d.DrawMap()
 	d.DrawButtons()
 	d.DrawInstructions()
 	d.DrawStatus()
 }
 
+// DrawMap draws the tiles in the designer
+func (d *Designer) DrawMap() {
+	for _, tile := range d.Map.Tiles {
+		texture := d.GrassTile
+		tileWidth := float32(texture.Width)
+		tileHeight := float32(texture.Height)
+
+		sourceRec := rl.Rectangle{X: 0, Y: 0, Width: tileWidth, Height: tileHeight}
+		destRec := rl.Rectangle{X: tile.X, Y: tile.Y, Width: tileWidth, Height: tileHeight}
+		rl.DrawTexturePro(texture, sourceRec, destRec, rl.Vector2{X: 0, Y: 0}, 0, rl.White)
+	}
+}
+
 // AddTileAt adds a tile at the given mouse position
-func (d *Designer) AddTileAt(game *Game, pos rl.Vector2) {
+func (d *Designer) AddTileAt(pos rl.Vector2) {
 	snapped := d.SnapToGrid(pos)
-	game.Map.AddTile(Tile{
-		X:        snapped.X,
-		Y:        snapped.Y,
-		TileType: Grass,
-	})
+	d.Map.AddTile(snapped.X, snapped.Y, 0) // 0 = Grass
 }
 
 // RemoveTileAt removes a tile at the given mouse position
-func (d *Designer) RemoveTileAt(game *Game, pos rl.Vector2) bool {
+func (d *Designer) RemoveTileAt(pos rl.Vector2) bool {
 	snapped := d.SnapToGrid(pos)
-	return game.Map.RemoveTileAt(snapped.X, snapped.Y)
+	return d.Map.RemoveTileAt(snapped.X, snapped.Y)
 }
 
 // SnapToGrid snaps a position to the tile grid
@@ -170,6 +183,11 @@ func (d *Designer) SetStatus(message string, color rl.Color) {
 }
 
 // SaveMap saves the current map to disk
-func (d *Designer) SaveMap(game *Game) error {
-	return game.Map.Save(d.MapPath)
+func (d *Designer) SaveMap() error {
+	return d.Map.Save(d.MapPath)
+}
+
+// ReloadMap reloads the map from disk
+func (d *Designer) ReloadMap() {
+	d.Map = InitMapForDesigner()
 }
