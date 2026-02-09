@@ -82,7 +82,7 @@ func (s *CollisionSystem) Update(world *ecs.World, dt float32) {
 				collisionRec := rl.GetCollisionRec(entityBounds, tileBounds)
 				correctionY := collisionDir.Y * collisionRec.Height
 				transform.Position.Y += correctionY
-
+				
 				if collisionDir.Y*transform.Velocity.Y < 0 {
 					transform.Velocity.Y = 0
 				}

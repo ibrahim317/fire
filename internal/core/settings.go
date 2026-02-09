@@ -114,33 +114,11 @@ func (s *SettingsMenu) Update() GameMode {
 
 // Draw renders the settings menu
 func (s *SettingsMenu) Draw(bg rl.Texture2D) {
-	// Draw background with overlay
-	rl.DrawTextureEx(bg, rl.Vector2{X: 0, Y: 0}, 0.0, 2.7, rl.White)
+	DrawScreenBackground(bg, 180)
+	DrawScreenTitleWithShadow(s.Title, s.TitleFontSize, 60, rl.Color{R: 100, G: 149, B: 237, A: 255})
 
-	// Semi-transparent overlay for better text readability
-	screenWidth := int32(rl.GetScreenWidth())
-	screenHeight := int32(rl.GetScreenHeight())
-	rl.DrawRectangle(0, 0, screenWidth, screenHeight, rl.Color{R: 0, G: 0, B: 0, A: 180})
-
-	// Draw title with shadow effect
-	titleWidth := rl.MeasureText(s.Title, s.TitleFontSize)
-	titleX := screenWidth/2 - titleWidth/2
-	titleY := int32(60)
-
-	// Shadow
-	rl.DrawText(s.Title, titleX+2, titleY+2, s.TitleFontSize, rl.Color{R: 0, G: 0, B: 0, A: 180})
-	// Main title
-	rl.DrawText(s.Title, titleX, titleY, s.TitleFontSize, rl.Color{R: 100, G: 149, B: 237, A: 255})
-
-	// Draw toggles
 	s.HighlightToggle.Draw()
-
-	// Draw back button
 	s.BackButton.Draw()
 
-	// Draw instructions
-	instructions := "Click toggles to change settings"
-	instructionSize := int32(16)
-	instructionWidth := rl.MeasureText(instructions, instructionSize)
-	rl.DrawText(instructions, screenWidth/2-instructionWidth/2, screenHeight-40, instructionSize, rl.Color{R: 150, G: 150, B: 150, A: 255})
+	DrawScreenInstructions("Click toggles to change settings", int32(rl.GetScreenHeight())-40, 16, rl.Color{R: 150, G: 150, B: 150, A: 255})
 }

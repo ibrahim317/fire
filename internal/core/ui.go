@@ -88,7 +88,7 @@ func NewMainMenu(screenWidth, screenHeight int32) *MainMenu {
 	}
 }
 
-// Update updates the main menu state
+// Updates the main menu state
 func (m *MainMenu) Update() GameMode {
 	m.PlayButton.Update()
 	m.DesignButton.Update()
@@ -108,38 +108,17 @@ func (m *MainMenu) Update() GameMode {
 
 // Draw renders the main menu
 func (m *MainMenu) Draw(bg rl.Texture2D) {
-	// Draw background with overlay
-	rl.DrawTextureEx(bg, rl.Vector2{X: 0, Y: 0}, 0.0, 2.7, rl.White)
+	DrawScreenBackground(bg, 150)
+	DrawScreenTitleWithShadow(m.Title, m.TitleFontSize, 100, rl.Color{R: 255, G: 165, B: 0, A: 255})
 
-	// Semi-transparent overlay for better text readability
-	screenWidth := int32(rl.GetScreenWidth())
-	screenHeight := int32(rl.GetScreenHeight())
-	rl.DrawRectangle(0, 0, screenWidth, screenHeight, rl.Color{R: 0, G: 0, B: 0, A: 150})
-
-	// Draw title with shadow effect
-	titleWidth := rl.MeasureText(m.Title, m.TitleFontSize)
-	titleX := screenWidth/2 - titleWidth/2
-	titleY := int32(100)
-
-	// Shadow
-	rl.DrawText(m.Title, titleX+3, titleY+3, m.TitleFontSize, rl.Color{R: 0, G: 0, B: 0, A: 180})
-	// Main title with gradient-like effect
-	rl.DrawText(m.Title, titleX, titleY, m.TitleFontSize, rl.Color{R: 255, G: 165, B: 0, A: 255})
-
-	// Subtitle
 	subtitle := "A Platformer Adventure"
 	subtitleSize := int32(20)
-	subtitleWidth := rl.MeasureText(subtitle, subtitleSize)
-	rl.DrawText(subtitle, screenWidth/2-subtitleWidth/2, titleY+m.TitleFontSize+10, subtitleSize, rl.Color{R: 200, G: 200, B: 200, A: 255})
+	titleY := int32(100)
+	DrawScreenTitle(subtitle, subtitleSize, titleY+m.TitleFontSize+10, rl.Color{R: 200, G: 200, B: 200, A: 255})
 
-	// Draw buttons
 	m.PlayButton.Draw()
 	m.DesignButton.Draw()
 	m.SettingsButton.Draw()
 
-	// Draw instructions
-	instructions := "Use arrow keys to move, Up to jump"
-	instructionSize := int32(16)
-	instructionWidth := rl.MeasureText(instructions, instructionSize)
-	rl.DrawText(instructions, screenWidth/2-instructionWidth/2, screenHeight-50, instructionSize, rl.Color{R: 150, G: 150, B: 150, A: 255})
+	DrawScreenInstructions("Use arrow keys to move, Up to jump", int32(rl.GetScreenHeight())-50, 16, rl.Color{R: 150, G: 150, B: 150, A: 255})
 }

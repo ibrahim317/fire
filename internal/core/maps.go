@@ -20,12 +20,7 @@ type TileJSON struct {
 	TileType int32   `json:"tileType"`
 }
 
-// LevelMapJSON represents the JSON structure for a level map.
-type LevelMapJSON struct {
-	Tiles []TileJSON `json:"tiles"`
-}
-
-// LevelMap holds the map data for the designer mode.
+// LevelMap holds the map data for the designer mode and JSON serialization.
 type LevelMap struct {
 	Tiles []TileJSON `json:"tiles"`
 }
@@ -35,10 +30,16 @@ func NewLevelMap() LevelMap {
 	return LevelMap{Tiles: make([]TileJSON, 0)}
 }
 
+// ErrMapNotFound is returned when the map file does not exist on disk.
+var ErrMapNotFound = errors.New("map not found")
+
 // LoadLevelMap loads a map from a JSON file.
 func LoadLevelMap(path string) (LevelMap, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return LevelMap{}, ErrMapNotFound
+		}
 		return LevelMap{}, err
 	}
 
@@ -128,7 +129,7 @@ func SpawnTiles(world *ecs.World, levelMap LevelMap, tileTexture rl.Texture2D) {
 
 // LoadAndSpawnMap loads the map from disk and spawns tile entities.
 func LoadAndSpawnMap(world *ecs.World, tileTexture rl.Texture2D) {
-	mapPath := ResourcePath("maps/custom_map.json")
+	mapPath := ResourcePath(DefaultMapPath)
 	levelMap, err := LoadLevelMap(mapPath)
 	if err != nil {
 		log.Printf("Unable to load map %s, starting empty: %v", mapPath, err)
@@ -139,7 +140,7 @@ func LoadAndSpawnMap(world *ecs.World, tileTexture rl.Texture2D) {
 
 // InitMapForDesigner loads the map for the designer mode.
 func InitMapForDesigner() LevelMap {
-	mapPath := ResourcePath("maps/custom_map.json")
+	mapPath := ResourcePath(DefaultMapPath)
 	levelMap, err := LoadLevelMap(mapPath)
 	if err != nil {
 		log.Printf("Unable to load map %s, starting empty: %v", mapPath, err)
@@ -147,6 +148,3 @@ func InitMapForDesigner() LevelMap {
 	}
 	return levelMap
 }
-
-// ErrMapNotFound is returned when the requested map is missing on disk.
-var ErrMapNotFound = errors.New("map not found")

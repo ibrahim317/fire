@@ -16,8 +16,8 @@ type Designer struct {
 	StatusMessage string
 	StatusColor   rl.Color
 	StatusUntil   time.Time
-	SaveButton    rl.Rectangle
-	BackButton    rl.Rectangle
+	SaveButton    Button
+	BackButton    Button
 	Map           LevelMap
 	GrassTile     rl.Texture2D
 }
@@ -27,12 +27,20 @@ func NewDesigner(game *Game) *Designer {
 	tileWidth := float32(game.GrassTile.Width)
 	tileHeight := float32(game.GrassTile.Height)
 
+	saveBtn := NewButton(20, 20, 140, 44, "Save Map")
+	saveBtn.NormalColor = rl.Color{R: 34, G: 139, B: 34, A: 220}
+	saveBtn.HoverColor = rl.Color{R: 50, G: 205, B: 50, A: 220}
+
+	backBtn := NewButton(170, 20, 140, 44, "Back to Menu")
+	backBtn.NormalColor = rl.Color{R: 70, G: 70, B: 90, A: 220}
+	backBtn.HoverColor = rl.Color{R: 100, G: 100, B: 130, A: 220}
+
 	return &Designer{
-		MapPath:    ResourcePath("maps/custom_map.json"),
+		MapPath:    ResourcePath(DefaultMapPath),
 		TileWidth:  tileWidth,
 		TileHeight: tileHeight,
-		SaveButton: rl.Rectangle{X: 20, Y: 20, Width: 140, Height: 44},
-		BackButton: rl.Rectangle{X: 170, Y: 20, Width: 140, Height: 44},
+		SaveButton: saveBtn,
+		BackButton: backBtn,
 		Map:        InitMapForDesigner(),
 		GrassTile:  game.GrassTile,
 	}
@@ -40,39 +48,31 @@ func NewDesigner(game *Game) *Designer {
 
 // Update handles designer input and returns the new game mode
 func (d *Designer) Update(game *Game) GameMode {
-	mouse := rl.GetMousePosition()
-
-	// Handle escape key to go back to menu
 	if rl.IsKeyPressed(rl.KeyEscape) {
 		return ModeMainMenu
 	}
 
+	d.SaveButton.Update()
+	d.BackButton.Update()
+
 	if rl.IsMouseButtonPressed(rl.MouseLeftButton) {
-		// Check save button
-		if rl.CheckCollisionPointRec(mouse, d.SaveButton) {
+		if d.SaveButton.IsClicked() {
 			if err := d.SaveMap(); err != nil {
 				d.SetStatus(fmt.Sprintf("Save failed: %v", err), rl.Red)
 			} else {
-				d.SetStatus(
-					fmt.Sprintf("Saved to %s", filepath.Base(d.MapPath)),
-					rl.DarkGreen,
-				)
+				d.SetStatus(fmt.Sprintf("Saved to %s", filepath.Base(d.MapPath)), rl.DarkGreen)
 			}
 			return ModeDesigner
 		}
-
-		// Check back button
-		if rl.CheckCollisionPointRec(mouse, d.BackButton) {
+		if d.BackButton.IsClicked() {
 			return ModeMainMenu
 		}
-
-		// Add tile
-		d.AddTileAt(mouse)
+		d.AddTileAt(rl.GetMousePosition())
 		d.SetStatus("Tile added", rl.DarkGreen)
 	}
 
 	if rl.IsMouseButtonPressed(rl.MouseRightButton) {
-		if d.RemoveTileAt(mouse) {
+		if d.RemoveTileAt(rl.GetMousePosition()) {
 			d.SetStatus("Tile removed", rl.Orange)
 		}
 	}
@@ -83,7 +83,7 @@ func (d *Designer) Update(game *Game) GameMode {
 // Draw renders the designer UI
 func (d *Designer) Draw(game *Game) {
 	rl.ClearBackground(rl.RayWhite)
-	rl.DrawTextureEx(game.Bg, rl.Vector2{X: 0, Y: 0}, 0, 2.7, rl.White)
+	DrawScreenBackground(game.Bg, 0)
 
 	d.DrawGrid(game)
 	d.DrawMap()
@@ -141,23 +141,8 @@ func (d *Designer) DrawGrid(game *Game) {
 
 // DrawButtons draws the save and back buttons
 func (d *Designer) DrawButtons() {
-	// Save button
-	saveColor := rl.Color{R: 34, G: 139, B: 34, A: 220}
-	if rl.CheckCollisionPointRec(rl.GetMousePosition(), d.SaveButton) {
-		saveColor = rl.Color{R: 50, G: 205, B: 50, A: 220}
-	}
-	rl.DrawRectangleRec(d.SaveButton, saveColor)
-	rl.DrawRectangleLinesEx(d.SaveButton, 2, rl.White)
-	rl.DrawText("Save Map", int32(d.SaveButton.X)+20, int32(d.SaveButton.Y)+12, 16, rl.White)
-
-	// Back button
-	backColor := rl.Color{R: 70, G: 70, B: 90, A: 220}
-	if rl.CheckCollisionPointRec(rl.GetMousePosition(), d.BackButton) {
-		backColor = rl.Color{R: 100, G: 100, B: 130, A: 220}
-	}
-	rl.DrawRectangleRec(d.BackButton, backColor)
-	rl.DrawRectangleLinesEx(d.BackButton, 2, rl.White)
-	rl.DrawText("Back to Menu", int32(d.BackButton.X)+10, int32(d.BackButton.Y)+12, 16, rl.White)
+	d.SaveButton.Draw()
+	d.BackButton.Draw()
 }
 
 // DrawInstructions draws the help text
@@ -179,7 +164,7 @@ func (d *Designer) DrawStatus() {
 func (d *Designer) SetStatus(message string, color rl.Color) {
 	d.StatusMessage = message
 	d.StatusColor = color
-	d.StatusUntil = time.Now().Add(2 * time.Second)
+	d.StatusUntil = time.Now().Add(time.Duration(DesignerStatusDurationSeconds) * time.Second)
 }
 
 // SaveMap saves the current map to disk

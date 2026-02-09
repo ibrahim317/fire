@@ -1,16 +1,7 @@
 package core
 
 import (
-	"os"
-	"path/filepath"
-	"sync"
-
 	rl "github.com/gen2brain/raylib-go/raylib"
-)
-
-var (
-	projectRootOnce sync.Once
-	projectRoot     string
 )
 
 func (g *Game) LoadAssets() {
@@ -83,42 +74,4 @@ func loadSpriteSheetData(imagePath string, frameCount int32, frameDelay int32, f
 		FrameSize:     frameSize,
 		IsSpriteSheet: true,
 	}
-}
-
-// ResourcePath returns the absolute path for a resource file.
-func ResourcePath(rel string) string {
-	root := resolveProjectRoot()
-	return filepath.Join(root, rel)
-}
-
-func resolveProjectRoot() string {
-	projectRootOnce.Do(func() {
-		if root, err := findProjectRoot(); err == nil {
-			projectRoot = root
-		} else {
-			projectRoot = "."
-		}
-	})
-	return projectRoot
-}
-
-func findProjectRoot() (string, error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-
-	for {
-		if _, statErr := os.Stat(filepath.Join(dir, "resources")); statErr == nil {
-			return dir, nil
-		}
-
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			break
-		}
-		dir = parent
-	}
-
-	return "", os.ErrNotExist
 }
